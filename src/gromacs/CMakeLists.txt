@@ -32,6 +32,8 @@
 # To help us fund GROMACS development, we humbly ask that you cite
 # the research papers on the package. Check out http://www.gromacs.org.
 
+include(${CMAKE_SOURCE_DIR}/Plumed.cmake)
+
 set(LIBGROMACS_SOURCES)
 
 set_property(GLOBAL PROPERTY GMX_LIBGROMACS_SOURCES)
@@ -171,6 +173,8 @@ if (HAS_NO_UNUSED_PARAMETER)
     set(_scanner_cpp_compiler_flags "${_scanner_cpp_compiler_flags} -Wno-unused-parameter")
 endif()
 set_source_files_properties(selection/scanner.cpp PROPERTIES COMPILE_FLAGS "${_scanner_cpp_compiler_flags}")
+
+target_link_libraries(libgromacs ${PLUMED_LOAD})
 
 target_link_libraries(libgromacs
                       ${EXTRAE_LIBRARIES}

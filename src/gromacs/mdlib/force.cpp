@@ -71,6 +71,13 @@
 #include "gromacs/utility/exceptions.h"
 #include "gromacs/utility/fatalerror.h"
 #include "gromacs/utility/smalloc.h"
+/* PLUMED */
+#include "../../../Plumed.h"
+int    plumedswitch=0;
+plumed plumedmain;
+void(*plumedcmd)(plumed,const char*,const void*)=NULL;
+/* END PLUMED */
+
 
 void ns(FILE              *fp,
         t_forcerec        *fr,
@@ -636,6 +643,13 @@ void do_force_lowlevel(t_forcerec *fr,      t_inputrec *ir,
         pr_rvecs(debug, 0, "fshift after bondeds", fr->fshift, SHIFTS);
     }
 
+    /* PLUMED */
+    if(plumedswitch){
+      int plumedNeedsEnergy;
+      (*plumedcmd)(plumedmain,"isEnergyNeeded",&plumedNeedsEnergy);
+      if(!plumedNeedsEnergy) (*plumedcmd)(plumedmain,"performCalc",NULL);
+    }
+    /* END PLUMED */
 }
 
 void init_enerdata(int ngener, int n_lambda, gmx_enerdata_t *enerd)

@@ -114,6 +114,12 @@
 #include "repl_ex.h"
 #include "resource-division.h"
 
+/* PLUMED */
+#include "../../../Plumed.h"
+extern int    plumedswitch;
+extern plumed plumedmain;
+/* END PLUMED */
+
 #ifdef GMX_FAHCORE
 #include "corewrap.h"
 #endif
@@ -1383,6 +1389,12 @@ int mdrunner(gmx_hw_opt_t *hw_opt,
     /* Does what it says */
     print_date_and_time(fplog, cr->nodeid, "Finished mdrun", gmx_gettime());
     walltime_accounting_destroy(walltime_accounting);
+
+    /* PLUMED */
+    if(plumedswitch){
+      plumed_finalize(plumedmain);
+    }
+    /* END PLUMED */
 
     /* Close logfile already here if we were appending to it */
     if (MASTER(cr) && (Flags & MD_APPENDFILES))

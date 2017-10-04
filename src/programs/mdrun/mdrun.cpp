@@ -71,6 +71,13 @@
 #include "mdrun_main.h"
 #include "runner.h"
 
+/* PLUMED */
+#include "../../../Plumed.h"
+extern int    plumedswitch;
+extern plumed plumedmain; 
+extern void(*plumedcmd)(plumed,const char*,const void*);
+/* END PLUMED */
+
 /*! \brief Return whether either of the command-line parameters that
  *  will trigger a multi-simulation is set */
 static bool is_multisim_option_set(int argc, const char *const argv[])
@@ -256,6 +263,7 @@ int gmx_mdrun(int argc, char *argv[])
         { efLOG, "-rt",     "rottorque", ffOPTWR },
         { efMTX, "-mtx",    "nm",       ffOPTWR },
         { efRND, "-multidir", NULL,      ffOPTRDMULT},
+        { efDAT, "-plumed", "plumed",   ffOPTRD },   /* PLUMED */
         { efDAT, "-membed", "membed",   ffOPTRD },
         { efTOP, "-mp",     "membed",   ffOPTRD },
         { efNDX, "-mn",     "membed",   ffOPTRD },
@@ -539,6 +547,31 @@ int gmx_mdrun(int argc, char *argv[])
     ddxyz[XX] = (int)(realddxyz[XX] + 0.5);
     ddxyz[YY] = (int)(realddxyz[YY] + 0.5);
     ddxyz[ZZ] = (int)(realddxyz[ZZ] + 0.5);
+
+    /* PLUMED */
+    plumedswitch=0;
+    if (opt2bSet("-plumed",NFILE,fnm)) plumedswitch=1;
+    if(plumedswitch){
+      plumedcmd=plumed_cmd;
+      int real_precision=sizeof(real);
+      real energyUnits=1.0;
+      real lengthUnits=1.0;
+      real timeUnits=1.0;
+  
+      if(!plumed_installed()){
+        gmx_fatal(FARGS,"Plumed is not available. Check your PLUMED_KERNEL variable.");
+      }
+      plumedmain=plumed_create();
+      plumed_cmd(plumedmain,"setRealPrecision",&real_precision);
+      // this is not necessary for gromacs units:
+      plumed_cmd(plumedmain,"setMDEnergyUnits",&energyUnits);
+      plumed_cmd(plumedmain,"setMDLengthUnits",&lengthUnits);
+      plumed_cmd(plumedmain,"setMDTimeUnits",&timeUnits);
+      //
+      plumed_cmd(plumedmain,"setPlumedDat",ftp2fn(efDAT,NFILE,fnm));
+      plumedswitch=1;
+    }
+    /* END PLUMED */
 
     rc = gmx::mdrunner(&hw_opt, fplog, cr, NFILE, fnm, oenv, bVerbose,
                        nstglobalcomm, ddxyz, dd_rank_order, npme, rdd, rconstr,
